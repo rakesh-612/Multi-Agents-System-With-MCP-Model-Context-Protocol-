@@ -317,7 +317,7 @@ with st.sidebar:
 
     st.markdown("<div class='sidebar-title'>Agent Pipeline</div>",
                 unsafe_allow_html=True)
-    for step in ["① Flight Agent", "② Hotel Agent", "③ Itinerary Agent", "④ Final Agent"]:
+    for step in ["① Flight Agent", "② Hotel Agent", "③ Weather Agent", "④ Itinerary Agent"]:
         st.markdown(
             f"<div class='sidebar-chip'>{step}</div>", unsafe_allow_html=True)
 
@@ -384,8 +384,8 @@ generate = st.button("🚀  Generate My Travel Plan", use_container_width=True)
 AGENT_META = {
     "flight_agent":    ("✈️", "Flight Agent"),
     "hotel_agent":     ("🏨", "Hotel Agent"),
+    "weather_agent": ("🌤️", "Weather Agent"),
     "itinerary_agent": ("🗓️", "Itinerary Agent"),
-    "final_agent":     ("🧠", "Final Agent"),
 }
 
 if generate:
@@ -393,8 +393,8 @@ if generate:
         st.warning("Please describe your trip first.")
     else:
         config = {"configurable": {"thread_id": thread_id}}
-        collected = {"flight_results": "", "hotel_results": "",
-                     "itinerary": "", "final_response": "", "llm_calls": 0}
+        collected = {"flight_results": "", "hotel_results": "", "weather_results": "",
+                     "itinerary": "", "llm_calls": 0}
 
         st.markdown("---")
         st.markdown("<div class='sec-head'><span>🤖 Agent Pipeline — Live</span></div>",
@@ -406,6 +406,7 @@ if generate:
                 "user_query": user_query,
                 "flight_results": "",
                 "hotel_results": "",
+                "weather_results": "",
                 "itinerary": "",
                 "llm_calls": 0,
             },
@@ -426,16 +427,15 @@ if generate:
                         collected["hotel_results"] = text
                         st.markdown(text or "_No hotel data returned._")
 
+                    elif node_name == "weather_agent":
+                        text = state_update.get("weather_results", "")
+                        collected["weather_results"] = text
+                        st.markdown(text or "_No weather data returned._")
+
                     elif node_name == "itinerary_agent":
                         text = state_update.get("itinerary", "")
                         collected["itinerary"] = text
                         st.markdown(text or "_No itinerary generated._")
-
-                    elif node_name == "final_agent":
-                        msgs = state_update.get("messages", [])
-                        text = msgs[-1].content if msgs else ""
-                        collected["final_response"] = text
-                        st.markdown(text or "_No final response._")
 
                     collected["llm_calls"] = state_update.get(
                         "llm_calls", collected["llm_calls"])
@@ -450,11 +450,15 @@ if generate:
         """, unsafe_allow_html=True)
 
         # Final plan card
-        if collected["final_response"]:
-            st.markdown("<div class='sec-head'><span>🧠 Final Travel Plan</span></div>",
-                        unsafe_allow_html=True)
-            st.markdown(f"<div class='final-card'>{collected['final_response']}</div>",
-                        unsafe_allow_html=True)
+        if collected["itinerary"]:
+            st.markdown(
+                "<div class='sec-head'><span>🧠 Final Travel Plan</span></div>",
+                unsafe_allow_html=True
+            )
+            st.markdown(
+                f"<div class='final-card'>{collected['itinerary']}</div>",
+                unsafe_allow_html=True
+            )
 
         # Save
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -479,15 +483,16 @@ if generate:
 
 ---
 
+## 🌤️ Weather Information
+{collected['weather_results'] or 'N/A'}
+
+---
+
 ## 🗓️ Itinerary
 {collected['itinerary'] or 'N/A'}
 
 ---
 
-## 🧠 Final Travel Plan
-{collected['final_response'] or 'N/A'}
-
----
 *LLM Calls: {collected['llm_calls']}*
 """
         with open(os.path.join(save_dir, filename), "w", encoding="utf-8") as f:
