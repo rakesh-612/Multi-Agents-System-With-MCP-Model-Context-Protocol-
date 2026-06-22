@@ -150,4 +150,4 @@ Final Agent combines everything together
 PostgreSQL stores conversation memory
 
 
-Reference - https://youtu.be/_5XF5CCnbDk, https://youtu.be/Yt5xBk7Xbs0
+Reference - https://youtu.be/Yt5xBk7Xbs0
